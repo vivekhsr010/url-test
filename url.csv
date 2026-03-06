@@ -1,0 +1,27 @@
+Base,Path,ExpectedStatus,ExpectedRedirect
+http://seriousrooster.nl,/,301,https://www.seriousrooster.com
+http://www.seriousrooster.com,/,301,https://www.seriousrooster.com
+http://www.seriousrooster.nl,/,301,https://www.seriousrooster.com
+http://www.seriousrooster.com,/en/contact.html,301,https://www.seriousrooster.com/en/contact.html
+http://www.seriousrooster.com,/nl/contact.html,301,https://www.seriousrooster.com/nl/contact.html
+http://www.seriousrooster.in,/,301,https://www.seriousrooster.com/
+http://seriousrooster.eu,/,301,https://www.seriousrooster.com/
+https://seriousrooster.nl,/,301,https://www.seriousrooster.com
+https://seriousrooster.eu,/,301,https://www.seriousrooster.com/
+https://seriousrooster.in,/,301,https://www.seriousrooster.com/
+https://www.seriousrooster.com,/,302,https://www.seriousrooster.com/en/
+https://www.seriousrooster.com,/en/,200,
+https://www.seriousrooster.com,/nl/,200,
+https://www.seriousrooster.com,/en/contact.html,200,
+https://www.seriousrooster.com,/en/services.html,200,
+https://www.seriousrooster.com,/en/about_us.html,200,
+https://www.seriousrooster.com,/nl/hoe_we_werken.html,200,
+https://www.seriousrooster.com,/nl/diensten.html,200,
+https://www.seriousrooster.com,/nl/contact.html,200,
+https://www.seriousrooster.com,/nl/over_ons.html,200,
+https://www.seriousrooster.com,/assets/pdf/240422-Algemene-Voorwaarden-Serious-Rooster-Consultancy-B.V.pdf,301,https://www.seriousrooster.com/nl/algemene_voorwaarden.html
+https://www.seriousrooster.com,/assets/pdf/250319%20Privacyverklaring%20website%20Serious%20Rooster%20Consultancy%20B.V.%20(Nederlands).pdf,200,
+https://www.seriousrooster.com,/en/terms_and_conditions.html,200,
+https://www.seriousrooster.com,/nl/algemene_voorwaarden.html,200,
+https://www.seriousrooster.com,/assets/pdf/260117 Algemene voorwaarden Serious Rooster Consultancy BV - v1.1.pdf,200,
+https://www.seriousrooster.com,/assets/pdf/260117 General Terms and Conditions Serious Rooster Consultancy BV - v1.1 (English translation).pdf,200,
