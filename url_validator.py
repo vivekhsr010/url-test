@@ -114,11 +114,14 @@ def check_url(test: Dict[str, Any]) -> Dict[str, Any]:
             last_error = error
             if attempt < MAX_RETRIES:
                 delay = RETRY_DELAY * (2 ** attempt)
-                print(f"[RETRY] {url} → attempt {attempt + 1}/{MAX_RETRIES} failed: {error}. "
-                      f"Retrying in {delay:.1f}s...")
+                print(f"[RETRY] {url} → retry {attempt + 1}/{MAX_RETRIES} after error: {error}. "
+                      f"Waiting {delay:.1f}s...")
                 time.sleep(delay)
             else:
-                print(f"[ERROR] {url} → all {MAX_RETRIES} retries exhausted: {error}")
+                if MAX_RETRIES == 0:
+                    print(f"[ERROR] {url} → {error}")
+                else:
+                    print(f"[ERROR] {url} → all {MAX_RETRIES} retries exhausted: {error}")
 
         except requests.exceptions.RequestException as error:
             print(f"[ERROR] {url} → {error}")
@@ -193,7 +196,7 @@ def main() -> None:
 
     start_time = time.time()
 
-    results: List[Optional[Dict[str, Any]]] = [None] * len(tests)
+    results: List[Dict[str, Any]] = [None] * len(tests)
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         future_to_index = {
@@ -203,7 +206,16 @@ def main() -> None:
 
         for future in as_completed(future_to_index):
             idx = future_to_index[future]
-            results[idx] = future.result()
+            try:
+                results[idx] = future.result()
+            except Exception as exc:
+                results[idx] = {
+                    **tests[idx],
+                    "status": None,
+                    "redirect": None,
+                    "success": False,
+                    "error": str(exc)
+                }
 
     elapsed = time.time() - start_time
     print(f"[INFO] All tests completed in {elapsed:.2f}s")
