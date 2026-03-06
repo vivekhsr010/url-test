@@ -18,9 +18,20 @@ CSV_FILE: str = "url.csv"
 XML_FILE: str = "results.xml"
 TIMEOUT: int = 6
 VERIFY_SSL: bool = os.getenv("VERIFY_SSL", "false").lower() == "true"
-MAX_WORKERS: int = int(os.getenv("MAX_WORKERS", "10"))
-MAX_RETRIES: int = int(os.getenv("MAX_RETRIES", "3"))
-RETRY_DELAY: float = float(os.getenv("RETRY_DELAY", "1.0"))
+try:
+    MAX_WORKERS: int = max(1, int(os.getenv("MAX_WORKERS", "10")))
+except ValueError:
+    MAX_WORKERS = 10
+
+try:
+    MAX_RETRIES: int = max(0, int(os.getenv("MAX_RETRIES", "3")))
+except ValueError:
+    MAX_RETRIES = 3
+
+try:
+    RETRY_DELAY: float = max(0.0, float(os.getenv("RETRY_DELAY", "1.0")))
+except ValueError:
+    RETRY_DELAY = 1.0
 
 if not VERIFY_SSL:
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
