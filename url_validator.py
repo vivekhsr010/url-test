@@ -2,9 +2,11 @@
 
 import sys
 import csv
+import time
 import requests
 import urllib3
 import xml.dom.minidom
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from xml.etree.ElementTree import Element, SubElement, tostring
 from urllib.parse import urljoin
 from datetime import datetime
@@ -16,6 +18,9 @@ CSV_FILE: str = "url.csv"
 XML_FILE: str = "results.xml"
 TIMEOUT: int = 6
 VERIFY_SSL: bool = os.getenv("VERIFY_SSL", "false").lower() == "true"
+MAX_WORKERS: int = int(os.getenv("MAX_WORKERS", "10"))
+MAX_RETRIES: int = int(os.getenv("MAX_RETRIES", "3"))
+RETRY_DELAY: float = float(os.getenv("RETRY_DELAY", "1.0"))
 
 if not VERIFY_SSL:
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -52,7 +57,7 @@ def normalize_row(row: Dict[str, str]) -> Dict[str, str | int]:
     }
 
 def check_url(test: Dict[str, Any]) -> Dict[str, Any]:
-    """Send HTTP request and validate the response."""
+    """Send HTTP request and validate the response, retrying on transient network errors."""
     url: Optional[str] = test.get("url")
 
     if not isinstance(url, str) or not url.strip():
@@ -65,36 +70,62 @@ def check_url(test: Dict[str, Any]) -> Dict[str, Any]:
             "error": "URL is invalid or empty"
         }
 
-    try:
-        response = requests.get(url, allow_redirects=False, timeout=TIMEOUT, verify=VERIFY_SSL)
-        status: int = response.status_code
-        redirect: str = response.headers.get("Location", "")
+    retryable_exceptions = (
+        requests.exceptions.ConnectionError,
+        requests.exceptions.Timeout,
+    )
 
-        is_status_ok: bool = status == test["expected_status"]
-        is_redirect_ok: bool = (
-            not test["expected_redirect"] or redirect.startswith(test["expected_redirect"])
-        )
+    last_error: Optional[Exception] = None
 
-        success: bool = is_status_ok and is_redirect_ok
+    for attempt in range(MAX_RETRIES + 1):
+        try:
+            response = requests.get(url, allow_redirects=False, timeout=TIMEOUT, verify=VERIFY_SSL)
+            status: int = response.status_code
+            redirect: str = response.headers.get("Location", "")
 
-        print_test_result(url, success, status, test["expected_status"], test["expected_redirect"], redirect)
+            is_status_ok: bool = status == test["expected_status"]
+            is_redirect_ok: bool = (
+                not test["expected_redirect"] or redirect.startswith(test["expected_redirect"])
+            )
 
-        return {
-            **test,
-            "status": status,
-            "redirect": redirect,
-            "success": success
-        }
+            success: bool = is_status_ok and is_redirect_ok
 
-    except requests.exceptions.RequestException as error:
-        print(f"[ERROR] {url} → {error}")
-        return {
-            **test,
-            "status": None,
-            "redirect": None,
-            "success": False,
-            "error": str(error)
-        }
+            print_test_result(url, success, status, test["expected_status"], test["expected_redirect"], redirect)
+
+            return {
+                **test,
+                "status": status,
+                "redirect": redirect,
+                "success": success
+            }
+
+        except retryable_exceptions as error:
+            last_error = error
+            if attempt < MAX_RETRIES:
+                delay = RETRY_DELAY * (2 ** attempt)
+                print(f"[RETRY] {url} → attempt {attempt + 1}/{MAX_RETRIES} failed: {error}. "
+                      f"Retrying in {delay:.1f}s...")
+                time.sleep(delay)
+            else:
+                print(f"[ERROR] {url} → all {MAX_RETRIES} retries exhausted: {error}")
+
+        except requests.exceptions.RequestException as error:
+            print(f"[ERROR] {url} → {error}")
+            return {
+                **test,
+                "status": None,
+                "redirect": None,
+                "success": False,
+                "error": str(error)
+            }
+
+    return {
+        **test,
+        "status": None,
+        "redirect": None,
+        "success": False,
+        "error": str(last_error)
+    }
 
 def print_test_result(
     url: str,
@@ -146,8 +177,25 @@ def main() -> None:
     print(f"[INFO] Reading test cases from {CSV_FILE}")
     tests = read_csv_file(CSV_FILE)
 
-    print(f"[INFO] Running {len(tests)} tests...")
-    results = [check_url(test) for test in tests]
+    print(f"[INFO] Running {len(tests)} tests with {MAX_WORKERS} workers "
+          f"(max retries: {MAX_RETRIES}, retry delay: {RETRY_DELAY}s)...")
+
+    start_time = time.time()
+
+    results: List[Optional[Dict[str, Any]]] = [None] * len(tests)
+
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        future_to_index = {
+            executor.submit(check_url, test): idx
+            for idx, test in enumerate(tests)
+        }
+
+        for future in as_completed(future_to_index):
+            idx = future_to_index[future]
+            results[idx] = future.result()
+
+    elapsed = time.time() - start_time
+    print(f"[INFO] All tests completed in {elapsed:.2f}s")
 
     write_junit_xml(results, XML_FILE)
 
