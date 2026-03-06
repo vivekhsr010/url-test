@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
-import csv
+import yaml
 import requests
 import urllib3
 import xml.dom.minidom
@@ -12,7 +12,7 @@ from typing import List, Dict, Any, Optional
 import os
 
 # === Configuration ===
-CSV_FILE: str = "url.csv"
+YAML_FILE: str = "urls.yaml"
 XML_FILE: str = "results.xml"
 TIMEOUT: int = 6
 VERIFY_SSL: bool = os.getenv("VERIFY_SSL", "false").lower() == "true"
@@ -20,35 +20,31 @@ VERIFY_SSL: bool = os.getenv("VERIFY_SSL", "false").lower() == "true"
 if not VERIFY_SSL:
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-def read_csv_file(path: str) -> List[Dict[str, Any]]:
-    """Read and normalize test cases from a CSV file."""
+def read_yaml_file(path: str) -> List[Dict[str, Any]]:
+    """Read and normalize test cases from a YAML file."""
     try:
-        with open(path, newline='', encoding='utf-8') as csvfile:
-            reader = csv.DictReader(csvfile)
-            return [normalize_row(row) for row in reader]
+        with open(path, encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+        return [normalize_entry(entry) for entry in data.get("tests", [])]
     except FileNotFoundError:
         sys.exit(f"[ERROR] File not found: {path}")
     except Exception as error:
-        sys.exit(f"[ERROR] Failed to read CSV file: {error}")
+        sys.exit(f"[ERROR] Failed to read YAML file: {error}")
 
-def normalize_row(row: Dict[str, str]) -> Dict[str, str | int]:
-    """Normalize a CSV row into a structured test case."""
-    base: str = (row.get("Base") or "").strip()
-    path: str = (row.get("Path") or "").strip()
-    redirect: str = (row.get("ExpectedRedirect") or "").strip()
-    status: str = (row.get("ExpectedStatus") or "200").strip()
-
+def normalize_entry(entry: Dict[str, Any]) -> Dict[str, Any]:
+    """Normalize a YAML test entry into a structured test case."""
+    base = str(entry.get("base", "")).strip()
+    path = str(entry.get("path", "")).strip()
+    redirect = str(entry.get("expected_redirect", "")).strip()
     try:
-        expected_status: int = int(status)
+        status = int(entry.get("expected_status", 200))
     except ValueError:
-        expected_status = 200
-
-    url: str = urljoin(base, path)
-
+        status = 200
     return {
-        "url": url,
-        "expected_status": expected_status,
-        "expected_redirect": redirect
+        "name": entry.get("name", ""),
+        "url": urljoin(base, path),
+        "expected_status": status,
+        "expected_redirect": redirect,
     }
 
 def check_url(test: Dict[str, Any]) -> Dict[str, Any]:
@@ -124,7 +120,8 @@ def write_junit_xml(results: List[Dict[str, Any]], file_path: str) -> None:
     suite.set("timestamp", datetime.now().astimezone().isoformat())
 
     for idx, result in enumerate(results, 1):
-        case = SubElement(suite, "testcase", classname="URLTest", name=f"[{idx}] {result['url']}")
+        label = result.get("name") or result["url"]
+        case = SubElement(suite, "testcase", classname="URLTest", name=f"[{idx}] {label}")
         if not result["success"]:
             msg = f"Status: {result.get('status')}, Redirect: {result.get('redirect')}"
             if "error" in result:
@@ -143,8 +140,8 @@ def write_junit_xml(results: List[Dict[str, Any]], file_path: str) -> None:
 
 def main() -> None:
     """Main execution function."""
-    print(f"[INFO] Reading test cases from {CSV_FILE}")
-    tests = read_csv_file(CSV_FILE)
+    print(f"[INFO] Reading test cases from {YAML_FILE}")
+    tests = read_yaml_file(YAML_FILE)
 
     print(f"[INFO] Running {len(tests)} tests...")
     results = [check_url(test) for test in tests]
