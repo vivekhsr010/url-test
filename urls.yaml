@@ -1,0 +1,142 @@
+tests:
+  - name: "Redirect seriousrooster.nl root to www.seriousrooster.com"
+    base: "http://seriousrooster.nl"
+    path: "/"
+    expected_status: 301
+    expected_redirect: "https://www.seriousrooster.com"
+
+  - name: "Redirect www.seriousrooster.com HTTP to HTTPS"
+    base: "http://www.seriousrooster.com"
+    path: "/"
+    expected_status: 301
+    expected_redirect: "https://www.seriousrooster.com"
+
+  - name: "Redirect www.seriousrooster.nl to www.seriousrooster.com"
+    base: "http://www.seriousrooster.nl"
+    path: "/"
+    expected_status: 301
+    expected_redirect: "https://www.seriousrooster.com"
+
+  - name: "Redirect HTTP contact EN to HTTPS"
+    base: "http://www.seriousrooster.com"
+    path: "/en/contact.html"
+    expected_status: 301
+    expected_redirect: "https://www.seriousrooster.com/en/contact.html"
+
+  - name: "Redirect HTTP contact NL to HTTPS"
+    base: "http://www.seriousrooster.com"
+    path: "/nl/contact.html"
+    expected_status: 301
+    expected_redirect: "https://www.seriousrooster.com/nl/contact.html"
+
+  - name: "Redirect www.seriousrooster.in to www.seriousrooster.com"
+    base: "http://www.seriousrooster.in"
+    path: "/"
+    expected_status: 301
+    expected_redirect: "https://www.seriousrooster.com/"
+
+  - name: "Redirect seriousrooster.eu HTTP to www.seriousrooster.com"
+    base: "http://seriousrooster.eu"
+    path: "/"
+    expected_status: 301
+    expected_redirect: "https://www.seriousrooster.com/"
+
+  - name: "Redirect seriousrooster.nl HTTPS to www.seriousrooster.com"
+    base: "https://seriousrooster.nl"
+    path: "/"
+    expected_status: 301
+    expected_redirect: "https://www.seriousrooster.com"
+
+  - name: "Redirect seriousrooster.eu HTTPS to www.seriousrooster.com"
+    base: "https://seriousrooster.eu"
+    path: "/"
+    expected_status: 301
+    expected_redirect: "https://www.seriousrooster.com/"
+
+  - name: "Redirect seriousrooster.in HTTPS to www.seriousrooster.com"
+    base: "https://seriousrooster.in"
+    path: "/"
+    expected_status: 301
+    expected_redirect: "https://www.seriousrooster.com/"
+
+  - name: "Root HTTPS redirects to /en/"
+    base: "https://www.seriousrooster.com"
+    path: "/"
+    expected_status: 302
+    expected_redirect: "https://www.seriousrooster.com/en/"
+
+  - name: "English homepage loads OK"
+    base: "https://www.seriousrooster.com"
+    path: "/en/"
+    expected_status: 200
+
+  - name: "Dutch homepage loads OK"
+    base: "https://www.seriousrooster.com"
+    path: "/nl/"
+    expected_status: 200
+
+  - name: "English contact page loads OK"
+    base: "https://www.seriousrooster.com"
+    path: "/en/contact.html"
+    expected_status: 200
+
+  - name: "English services page loads OK"
+    base: "https://www.seriousrooster.com"
+    path: "/en/services.html"
+    expected_status: 200
+
+  - name: "English about us page loads OK"
+    base: "https://www.seriousrooster.com"
+    path: "/en/about_us.html"
+    expected_status: 200
+
+  - name: "Dutch how we work page loads OK"
+    base: "https://www.seriousrooster.com"
+    path: "/nl/hoe_we_werken.html"
+    expected_status: 200
+
+  - name: "Dutch services page loads OK"
+    base: "https://www.seriousrooster.com"
+    path: "/nl/diensten.html"
+    expected_status: 200
+
+  - name: "Dutch contact page loads OK"
+    base: "https://www.seriousrooster.com"
+    path: "/nl/contact.html"
+    expected_status: 200
+
+  - name: "Dutch about us page loads OK"
+    base: "https://www.seriousrooster.com"
+    path: "/nl/over_ons.html"
+    expected_status: 200
+
+  - name: "Old terms PDF redirects to Dutch terms page"
+    base: "https://www.seriousrooster.com"
+    path: "/assets/pdf/240422-Algemene-Voorwaarden-Serious-Rooster-Consultancy-B.V.pdf"
+    expected_status: 301
+    expected_redirect: "https://www.seriousrooster.com/nl/algemene_voorwaarden.html"
+
+  - name: "Privacy statement PDF loads OK"
+    base: "https://www.seriousrooster.com"
+    path: "/assets/pdf/250319%20Privacyverklaring%20website%20Serious%20Rooster%20Consultancy%20B.V.%20(Nederlands).pdf"
+    expected_status: 200
+
+  - name: "English terms and conditions page loads OK"
+    base: "https://www.seriousrooster.com"
+    path: "/en/terms_and_conditions.html"
+    expected_status: 200
+
+  - name: "Dutch terms and conditions page loads OK"
+    base: "https://www.seriousrooster.com"
+    path: "/nl/algemene_voorwaarden.html"
+    expected_status: 200
+
+  - name: "Dutch general terms PDF v1.1 loads OK"
+    base: "https://www.seriousrooster.com"
+    path: "/assets/pdf/260117 Algemene voorwaarden Serious Rooster Consultancy BV - v1.1.pdf"
+    expected_status: 200
+
+  - name: "English general terms PDF v1.1 loads OK"
+    base: "https://www.seriousrooster.com"
+    path: "/assets/pdf/260117 General Terms and Conditions Serious Rooster Consultancy BV - v1.1 (English translation).pdf"
+    expected_status: 200
