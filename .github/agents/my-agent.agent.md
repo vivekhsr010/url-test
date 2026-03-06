@@ -4,8 +4,7 @@
 # To make this agent available, merge this file into the default repository branch.
 # For format details, see: https://gh.io/customagents/config
 
----
-name: CSV to YAML Migration Agent \
+name: CSV to YAML Migration Agent 
 description: Migrates url_validator.py input from CSV format to YAML for better consistency, comments, and multi-environment support.
 ---
 
